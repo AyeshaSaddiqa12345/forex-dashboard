@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ForexPro — Market Data Terminal</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Syne', sans-serif;
+      background: #0a0e1a;
+      min-height: 100vh;
+      color: #e2e8f0;
+    }
+
+    /* ── Header ── */
+    .fx-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 28px 16px;
+      border-bottom: 0.5px solid rgba(255,255,255,0.08);
+    }
+
+    .fx-logo { display: flex; align-items: center; gap: 10px; }
+
+    .fx-logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, #3b82f6, #06b6d4);
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; color: white;
+    }
+
+    .fx-logo-text { font-size: 17px; font-weight: 700; color: #f1f5f9; letter-spacing: 0.5px; }
+    .fx-logo-sub  { font-size: 11px; color: #64748b; font-family: 'DM Mono', monospace; }
+
+    .fx-live-badge {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(16,185,129,0.1);
+      border: 0.5px solid rgba(16,185,129,0.3);
+      border-radius: 20px; padding: 5px 14px;
+      font-size: 11px; color: #34d399;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .fx-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #10b981;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.25;} }
+
+    /* ── Section label ── */
+    .fx-section-label {
+      padding: 18px 28px 6px;
+      font-size: 10px; color: #4b5563;
+      letter-spacing: 2.5px; text-transform: uppercase;
+      font-family: 'DM Mono', monospace;
+    }
+
+    /* ── Cards grid ── */
+    .fx-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 14px;
+      padding: 0 28px 20px;
+    }
+
+    .fx-card {
+      background: #111827;
+      border: 0.5px solid rgba(255,255,255,0.07);
+      border-radius: 14px;
+      padding: 18px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.3s, transform 0.2s;
+    }
+
+    .fx-card:hover {
+      border-color: rgba(59,130,246,0.4);
+      transform: translateY(-3px);
+    }
+
+    .fx-card-accent {
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, #3b82f6, #06b6d4);
+    }
+
+    .fx-pair {
+      font-size: 12px; font-weight: 600; color: #94a3b8;
+      letter-spacing: 1.5px; font-family: 'DM Mono', monospace;
+      margin-bottom: 14px;
+    }
+
+    .fx-rate-row { display: flex; justify-content: space-between; align-items: center; }
+
+    .fx-label { font-size: 10px; color: #4b5563; font-family: 'DM Mono', monospace; margin-bottom: 2px; }
+
+    .fx-value {
+      font-size: 16px; font-weight: 600;
+      color: #e2e8f0; font-family: 'DM Mono', monospace;
+    }
+
+    .fx-change {
+      display: flex; align-items: center; gap: 3px;
+      font-size: 11px; font-family: 'DM Mono', monospace;
+      padding: 3px 8px; border-radius: 5px; font-weight: 500;
+    }
+    .fx-change.up { color: #34d399; background: rgba(52,211,153,0.1); }
+    .fx-change.dn { color: #f87171; background: rgba(248,113,113,0.1); }
+
+    .fx-divider { border: none; border-top: 0.5px solid rgba(255,255,255,0.05); margin: 12px 0; }
+
+    .fx-sell-row { display: flex; justify-content: space-between; align-items: flex-end; }
+
+    .fx-sell-val {
+      font-size: 14px; font-weight: 500;
+      color: #94a3b8; font-family: 'DM Mono', monospace;
+    }
+
+    .sparkline { display: flex; align-items: flex-end; gap: 2px; height: 22px; }
+
+    .spark-bar {
+      width: 4px; border-radius: 2px;
+      background: #1d4ed8;
+      transition: height 0.4s ease, background 0.3s;
+    }
+
+    .fx-ts {
+      font-size: 10px; color: #374151;
+      font-family: 'DM Mono', monospace;
+      margin-top: 10px;
+    }
+
+    /* ── Converter ── */
+    .fx-converter {
+      margin: 0 28px 24px;
+      background: #111827;
+      border: 0.5px solid rgba(255,255,255,0.07);
+      border-radius: 14px;
+      padding: 22px 24px;
+    }
+
+    .fx-conv-title {
+      font-size: 14px; font-weight: 600; color: #e2e8f0;
+      margin-bottom: 18px;
+    }
+
+    .fx-conv-row {
+      display: flex; gap: 12px;
+      flex-wrap: wrap; align-items: flex-end;
+      margin-bottom: 14px;
+    }
+
+    .fx-conv-group { display: flex; flex-direction: column; gap: 5px; }
+
+    .fx-conv-label {
+      font-size: 10px; color: #4b5563;
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 1px; text-transform: uppercase;
+    }
+
+    .fx-arrow { padding-bottom: 9px; color: #374151; font-size: 20px; }
+
+    select, input[type="number"] {
+      background: #0a0e1a;
+      border: 0.5px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      color: #e2e8f0;
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      padding: 9px 12px;
+      outline: none;
+      transition: border-color 0.2s;
+      appearance: none;
+    }
+
+    select:focus, input[type="number"]:focus {
+      border-color: rgba(59,130,246,0.5);
+    }
+
+    input[type="number"] { width: 130px; }
+
+    button {
+      background: linear-gradient(135deg, #3b82f6, #06b6d4);
+      border: none; border-radius: 8px;
+      color: white; font-size: 13px; font-weight: 600;
+      padding: 10px 22px; cursor: pointer;
+      font-family: 'Syne', sans-serif;
+      letter-spacing: 0.3px;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    button:hover { opacity: 0.88; }
+    button:active { transform: scale(0.97); }
+
+    .fx-result {
+      background: #0a0e1a;
+      border: 0.5px solid rgba(59,130,246,0.2);
+      border-radius: 8px;
+      padding: 13px 18px;
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      color: #94a3b8;
+      min-height: 46px;
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    .fx-result-val {
+      font-size: 20px; font-weight: 500; color: #34d399;
+    }
+
+    /* ── Footer ── */
+    .fx-footer {
+      padding: 14px 28px;
+      border-top: 0.5px solid rgba(255,255,255,0.05);
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 8px;
+    }
+
+    .fx-footer span {
+      font-size: 10px; color: #374151;
+      font-family: 'DM Mono', monospace;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="fx-header">
+    <div class="fx-logo">
+      <div class="fx-logo-icon">FX</div>
+      <div>
+        <div class="fx-logo-text">ForexPro</div>
+        <div class="fx-logo-sub">market data terminal</div>
+      </div>
+    </div>
+    <div class="fx-live-badge">
+      <span class="fx-dot"></span>
+      LIVE RATES
+    </div>
+  </div>
+
+  <!-- Cards -->
+  <div class="fx-section-label">major pairs</div>
+  <div class="fx-grid" id="cardGrid"></div>
+
+  <!-- Converter -->
+  <div class="fx-section-label">currency converter</div>
+  <div class="fx-converter">
+    <div class="fx-conv-title">Convert</div>
+    <div class="fx-conv-row">
+      <div class="fx-conv-group">
+        <span class="fx-conv-label">From</span>
+        <select id="from">
+          <option>USD</option>
+          <option>EUR</option>
+          <option>GBP</option>
+          <option>AED</option>
+          <option>PKR</option>
+        </select>
+      </div>
+      <div class="fx-arrow">→</div>
+      <div class="fx-conv-group">
+        <span class="fx-conv-label">To</span>
+        <select id="to">
+          <option>PKR</option>
+          <option>USD</option>
+          <option>EUR</option>
+          <option>GBP</option>
+          <option>AED</option>
+        </select>
+      </div>
+      <div class="fx-conv-group">
+        <span class="fx-conv-label">Amount</span>
+        <input type="number" id="amount" placeholder="0.00" />
+      </div>
+      <button onclick="convert()">Convert</button>
+    </div>
+    <div class="fx-result" id="result">
+      <span style="color:#374151;">Enter an amount to convert</span>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="fx-footer">
+    <span>Data simulated for demonstration purposes only</span>
+    <span id="clock"></span>
+  </div>
+
+  <script>
+    const PAIRS = [
+      { id: 'USD_PKR', label: 'USD / PKR', buy: 278.50, spread: 0.70 },
+      { id: 'EUR_PKR', label: 'EUR / PKR', buy: 301.20, spread: 0.90 },
+      { id: 'GBP_PKR', label: 'GBP / PKR', buy: 350.10, spread: 0.90 },
+      { id: 'USD_EUR', label: 'USD / EUR', buy: 0.9200, spread: 0.02 },
+      { id: 'USD_AED', label: 'USD / AED', buy: 3.6700, spread: 0.03 },
+    ];
+
+    let rates   = {};
+    let history = {};
+
+    PAIRS.forEach(p => {
+      rates[p.id]   = p.buy;
+      history[p.id] = [p.buy];
+    });
+
+    /* ── Sparkline bars ── */
+    function sparkBars(hist) {
+      const mn = Math.min(...hist), mx = Math.max(...hist);
+      return hist.slice(-8).map(v => {
+        const h = mn === mx ? 10 : 4 + Math.round(((v - mn) / (mx - mn)) * 17);
+        return `<div class="spark-bar" style="height:${h}px;"></div>`;
+      }).join('');
+    }
+
+    /* ── Initial render ── */
+    function renderCards() {
+      const grid = document.getElementById('cardGrid');
+      grid.innerHTML = PAIRS.map(p => {
+        const buy  = rates[p.id];
+        const sell = buy + p.spread;
+        return `
+        <div class="fx-card">
+          <div class="fx-card-accent"></div>
+          <div class="fx-pair">${p.label}</div>
+          <div class="fx-rate-row">
+            <div>
+              <div class="fx-label">BUY</div>
+              <div class="fx-value" id="buy_${p.id}">${buy.toFixed(4)}</div>
+            </div>
+            <div class="fx-change up" id="chg_${p.id}">▲ 0.00%</div>
+          </div>
+          <hr class="fx-divider">
+          <div class="fx-sell-row">
+            <div>
+              <div class="fx-label">SELL</div>
+              <div class="fx-sell-val" id="sell_${p.id}">${sell.toFixed(4)}</div>
+            </div>
+            <div class="sparkline" id="spark_${p.id}">${sparkBars(history[p.id])}</div>
+          </div>
+          <div class="fx-ts" id="ts_${p.id}">Updated just now</div>
+        </div>`;
+      }).join('');
+    }
+
+    /* ── Live update ── */
+    function updateCards() {
+      PAIRS.forEach(p => {
+        const change  = (Math.random() - 0.5) * 0.4;
+        rates[p.id]   = Math.max(0.01, rates[p.id] + change);
+        history[p.id].push(rates[p.id]);
+        if (history[p.id].length > 20) history[p.id].shift();
+
+        const buy  = rates[p.id];
+        const sell = buy + p.spread;
+        const hist = history[p.id];
+        const prev = hist.length > 1 ? hist[hist.length - 2] : buy;
+        const up   = buy >= prev;
+        const diff = ((buy - hist[0]) / hist[0] * 100).toFixed(2);
+
+        const $ = id => document.getElementById(id);
+        if ($('buy_'   + p.id)) $('buy_'   + p.id).textContent = buy.toFixed(4);
+        if ($('sell_'  + p.id)) $('sell_'  + p.id).textContent = sell.toFixed(4);
+        if ($('spark_' + p.id)) $('spark_' + p.id).innerHTML   = sparkBars(hist);
+        if ($('ts_'    + p.id)) $('ts_'    + p.id).textContent = 'Updated: ' + new Date().toLocaleTimeString();
+        if ($('chg_'   + p.id)) {
+          const el = $('chg_' + p.id);
+          el.textContent  = (up ? '▲ ' : '▼ ') + Math.abs(diff) + '%';
+          el.className    = 'fx-change ' + (up ? 'up' : 'dn');
+        }
+      });
+    }
+
+    /* ── Converter ── */
+    function convert() {
+      const from   = document.getElementById('from').value;
+      const to     = document.getElementById('to').value;
+      const amount = parseFloat(document.getElementById('amount').value);
+      const res    = document.getElementById('result');
+
+      if (isNaN(amount) || amount <= 0) {
+        res.innerHTML = '<span style="color:#4b5563;">Please enter a valid amount</span>';
+        return;
+      }
+
+      const key = from + '_' + to;
+      const rev = to  + '_' + from;
+      let val;
+
+      if (from === to)    val = amount;
+      else if (rates[key]) val = amount * rates[key];
+      else if (rates[rev]) val = amount / rates[rev];
+      else {
+        res.innerHTML = '<span style="color:#f87171;">Pair not available</span>';
+        return;
+      }
+
+      res.innerHTML = `
+        <span style="color:#64748b;">${amount.toLocaleString()} ${from} =</span>
+        <span class="fx-result-val">${val.toFixed(4)} ${to}</span>`;
+    }
+
+    /* ── Clock ── */
+    function updateClock() {
+      const el = document.getElementById('clock');
+      if (el) el.textContent = new Date().toLocaleString('en-US', {
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+      }) + ' local time';
+    }
+
+    renderCards();
+    setInterval(updateCards, 2500);
+    setInterval(updateClock, 1000);
+    updateClock();
+  </script>
+</body>
+</html>
